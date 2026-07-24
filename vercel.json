@@ -1,5 +1,4 @@
 {
-  "framework": null,
-  "buildCommand": "python src/build.py",
-  "outputDirectory": "src/dist"
+  "buildCommand": "pip install . && python src/build.py --output dist",
+  "outputDirectory": "dist"
 }
