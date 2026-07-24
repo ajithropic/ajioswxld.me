@@ -1,4 +1,4 @@
 {
-  "buildCommand": "pip install . && python src/build.py --output dist",
+  "buildCommand": "pip install --break-system-packages . && python src/build.py --output dist",
   "outputDirectory": "dist"
 }
