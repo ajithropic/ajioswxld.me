@@ -15,6 +15,3 @@ readme = "README.md"
 dev = [
     "flask>=3.1.0",
 ]
-
-[tool.vercel]
-entrypoint = "src.dev-server:app"
