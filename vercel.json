@@ -1,4 +1,5 @@
 {
   "buildCommand": "pip install uv --break-system-packages && bash build.sh",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "cleanUrls": true
 }
