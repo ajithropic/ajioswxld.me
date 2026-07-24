@@ -40,7 +40,7 @@ my_wait() {
 
     for pid in "${pids[@]}"; do
         wait "$pid"
-        if [ $? -ne 0 ]; then
+        if [ $? -ne 0 ]; then   
             failed=1
         fi
     done
