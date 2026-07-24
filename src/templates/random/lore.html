@@ -1,961 +1,1137 @@
-{% extends "layout.html" %}
-{% from "components/fieldset.html" import fieldset %}
-
-{% block head_extra %}
-  <style>
-    .lore-shell {
-      overflow: hidden;
-      background: var(--site-panel-soft);
-      border: 1px solid var(--site-border);
-      box-shadow: 6px 6px 0 var(--site-shadow);
-    }
-
-    .lore-hero {
-      padding: 1.15rem 1rem 1rem;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
-        var(--site-panel);
-    }
-
-    .lore-hero h2,
-    .lore-hero p {
-      margin: 0;
-    }
-
-    .lore-hero h2 {
-      font-size: 1.6rem;
-      line-height: 1;
-      text-transform: lowercase;
-    }
-
-    .lore-hero p {
-      margin-top: 0.35rem;
-      max-width: 58ch;
-      font-size: 1rem;
-      line-height: 1.35;
-      color: var(--site-muted);
-    }
-
-    .lore-section {
-      padding: 0 1rem 1rem;
-    }
-
-    .lore-section-label {
-      display: inline-block;
-      margin: 0.35rem 0 0.8rem;
-      padding: 0.22rem 0.52rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      background: color-mix(in srgb, var(--site-panel) 70%, #9db7ff);
-      border: 1px solid var(--site-border);
-    }
-
-    .lore-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          color-mix(in srgb, var(--site-text) 6%, transparent) 0,
-          color-mix(in srgb, var(--site-text) 6%, transparent) 1px,
-          transparent 1px,
-          transparent 22px
-        ),
-        var(--site-panel-soft);
-    }
-
-    .lore-entry {
-      border: 1px solid var(--site-border);
-      background: color-mix(in srgb, var(--site-panel) 92%, transparent);
-      box-shadow: 4px 4px 0 var(--site-shadow);
-      overflow: hidden;
-      transition: box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
-    }
-
-    .lore-entry.is-targeted {
-      border-color: #e2b714;
-      background: color-mix(in srgb, var(--site-panel) 78%, #fff4bf);
-      box-shadow: 0 0 0 3px rgba(226, 183, 20, 0.18), 4px 4px 0 var(--site-shadow);
-    }
-
-    .lore-entry summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 0.85rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .lore-entry summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .lore-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 0.18rem;
-    }
-
-    .lore-summary-right {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.55rem;
-      flex: 0 0 auto;
-    }
-
-    .lore-title {
-      font-size: 1rem;
-      line-height: 1.2;
-      font-weight: 700;
-    }
-
-    .lore-copy-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.35rem;
-      height: 1.35rem;
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      box-shadow: 2px 2px 0 var(--site-shadow);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.8rem;
-      line-height: 1;
-    }
-
-    .lore-copy-link:hover {
-      background: var(--site-text);
-      color: var(--site-panel);
-    }
-
-    .lore-copy-link.is-copied {
-      width: auto;
-      padding: 0 0.45rem;
-      font-size: 0.62rem;
-    }
-
-    .lore-body {
-      font-weight: 400;
-    }
-
-    .lore-toggle {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.82rem;
-      opacity: 0.56;
-      transition: transform 120ms ease;
-    }
-
-    .lore-entry[open] .lore-toggle {
-      transform: rotate(45deg);
-    }
-
-    .lore-body {
-      padding: 0 1rem 1rem;
-      border-top: 1px solid var(--site-border);
-    }
-
-    .lore-body p {
-      margin: 0.75rem 0 0;
-      line-height: 1.55;
-    }
-
-    .guess-game {
-      margin-top: 0.75rem;
-    }
-
-    .guess-input-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .guess-input-row input {
-      width: 160px;
-      padding: 0.4rem 0.6rem;
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      color: var(--site-text);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.9rem;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-4px); }
-      40%, 80% { transform: translateX(4px); }
-    }
-
-    .guess-result.shake {
-      animation: shake 0.3s ease;
-    }
-
-    .guess-input-row button {
-      padding: 0.4rem 0.75rem;
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      color: var(--site-text);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-
-    .guess-input-row button:hover {
-      background: var(--site-panel-soft);
-    }
-
-    .guess-result {
-      font-family: "IBM Plex Mono", monospace;
-      font-weight: 600;
-    }
-
-    .guess-result.correct {
-      color: #1ca34b;
-    }
-
-    .typing-game {
-      margin-top: 0.75rem;
-    }
-
-    .typing-display {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 1.1rem;
-      line-height: 1.8;
-      padding: 1rem;
-      background: #2b2b2b;
-      color: #646669;
-      border: 1px solid var(--site-border);
-      letter-spacing: 0.02em;
-      user-select: none;
-    }
-
-    .typing-display .correct {
-      color: #d1d0c5;
-    }
-
-    .typing-display .incorrect {
-      color: #ca4754;
-      text-decoration: underline;
-    }
-
-    .typing-display .current {
-      border-left: 2px solid transparent;
-      margin-left: -1px;
-    }
-
-    .typing-game.focused .typing-display .current {
-      border-left-color: #e2b714;
-      animation: blink 1s infinite;
-    }
-
-    @keyframes blink {
-      0%, 50% { border-color: #e2b714; }
-      51%, 100% { border-color: transparent; }
-    }
-
-    .typing-input {
-      width: 100%;
-      margin-top: 0.75rem;
-      padding: 0.6rem 0.8rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 1rem;
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      color: var(--site-text);
-    }
-
-    .typing-input:focus {
-      outline: 2px solid #e2b714;
-      outline-offset: -2px;
-    }
-
-    .typing-stats {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.6rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.9rem;
-    }
-
-    .typing-stats span {
-      color: var(--site-muted);
-    }
-
-    .typing-stats #typing-wpm {
-      color: #e2b714;
-      font-weight: 600;
-    }
-
-    .typing-stats button {
-      margin-left: auto;
-      padding: 0.3rem 0.6rem;
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      color: var(--site-text);
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-
-    .typing-stats button:hover {
-      background: var(--site-panel-soft);
-    }
-
-    .typing-result {
-      font-family: "IBM Plex Mono", monospace;
-      font-weight: 600;
-    }
-
-    .typing-result.win {
-      color: #1ca34b;
-    }
-
-    .typing-result.lose {
-      color: #ca4754;
-    }
-  </style>
-{% endblock %}
-
-{% block content %}
-  <div class="flex flex-col gap-4">
-    {% call fieldset("cat ~/random/lore.md") %}
-      <div class="lore-shell">
-        <section class="lore-hero">
-          <h2>lore</h2>
-          <p>(my life's faqs)</p>
-        </section>
-
-        <section class="lore-section">
-          <p class="lore-section-label">life</p>
-          <div class="lore-list">
-            <details id="faq-about" class="lore-entry" open>
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">so tell me about yourself</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  hey! i'm andy. cs major at uf, roblox game developer with
-                  145+ million plays, and i like building things that people
-                  actually use. currently interning at adtran and heading to
-                  nvidia this summer.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-why-cs" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">why computer science?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  honestly i never planned on it. my dad had me watching top gun
-                  since i was five and i wanted to be a fighter pilot for years.
-                  probably watched that movie 30+ times. then i learned you could
-                  die doing that so i pivoted to aerospace engineering - figured
-                  i'd test fighter jets in simulations instead.
-                </p>
-                <p>
-                  but i'd also been on computers since i was like eight. spent a
-                  lot of time in minecraft building redstone contraptions -
-                  hidden piston doors, following tutorials, making my own stuff.
-                  sort of like forking repos before i knew what that meant.
-                </p>
-                <p>
-                  took my first cs class in high school and it clicked. not love
-                  at first sight, but i realized cs lets you build solutions in
-                  almost any discipline. that's still what i believe and it keeps
-                  proving itself. it's not really the coding i enjoy - it's being
-                  able to make things people can actually use and see the impact.
-                </p>
-                <figure class="mt-4">
-                  <img
-                    src="/assets/lore/why_cs.jpeg"
-                    alt="My first PC build from 2019"
-                    class="w-full max-w-sm border border-black/20 dark:border-white/20"
-                    loading="lazy"
-                  />
-                  <figcaption class="text-sm opacity-70 mt-2">
-                    built my first pc in 2019 for christmas<br />
-                    (P.S. the radeon card was a gift from my uncle's old bitcoin rig)<br />
-                    (P.P.S. my new rig is on a rtx 2080 super)
-                  </figcaption>
-                </figure>
-              </div>
-            </details>
-
-            <details id="faq-weakness" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what's your biggest weakness?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  i say "this should only take a weekend" way too often. and
-                  then it doesn't.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-five-years" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">where do you see yourself in 5 years?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  honestly? no idea. probably still building stuff and figuring
-                  it out as i go. that's worked so far.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-fun" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what do you do for fun?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  playing video games with friends, hiking, rock climbing,
-                  meeting new people. i like being around people.
-                </p>
-              </div>
-            </details>
-
-          </div>
-        </section>
-
-        <section class="lore-section">
-          <p class="lore-section-label">roblox</p>
-          <div class="lore-list">
-            <details id="faq-roblox-games" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">wait you make roblox games?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  yeah! i've been doing it since middle school. my games have
-                  over 145 million plays total. it's how i learned to code and
-                  run a business honestly.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-roblox-start" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">how'd you get into that?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  a friend messaged me asking if i could make a logo for his
-                  roblox game since i was messing around with photoshop. i said
-                  sure, learned how, and he liked it enough to send me to his
-                  friends. they paid me, so i started freelancing online.
-                </p>
-                <p>
-                  then someone asked if i could do game renders in blender. i
-                  said yeah and learned that. then 3d models. then coding. each
-                  time someone asked for something new i just figured it out.
-                  eventually i was doing full stack game dev - shipped games
-                  with friends first, then solo.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-roblox-still" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">do you still do that?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  yep! i still run my games and work on new ones when i have
-                  time. it's less active now with school and internships but i'm
-                  not done with it.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-roblox-fails" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">how many failed roblox games have you made?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>guess!</p>
-                <div class="guess-game" id="guess-game">
-                  <div class="guess-input-row">
-                    <input
-                      type="number"
-                      id="guess-input"
-                      placeholder="enter a number"
-                      min="1"
-                      max="100"
-                    />
-                    <button type="button" id="guess-submit">submit</button>
-                    <button type="button" id="guess-giveup">give up</button>
-                  </div>
-                  <p id="guess-result" class="guess-result"></p>
-                </div>
-                <p class="text-sm opacity-60 mt-3">
-                  (a "failed" game = something i spent 50+ hours on that never shipped)
-                </p>
-              </div>
-            </details>
-          </div>
-        </section>
-
-        <section class="lore-section">
-          <p class="lore-section-label">building</p>
-          <div class="lore-list">
-            <details id="faq-building-now" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what are you working on right now?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  hackathons i go to, roblox games, and a for-funsies trading
-                  algo using some statistical concepts i learned in sta 4821
-                  (stochastic processes).
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-learning" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">how do you learn new stuff?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  i just start building and figure it out as i go. if i get
-                  stuck i'll read docs or ask someone but i learn best by doing.
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-stack" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what's your tech stack?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  whatever my team is using :) i'm flexible. but my go-to stack
-                  when i'm solo is js/html, python, or lua for roblox games.
-                </p>
-              </div>
-            </details>
-          </div>
-        </section>
-
-        <section class="lore-section">
-          <p class="lore-section-label">random</p>
-          <div class="lore-list">
-            <details id="faq-typing-speed" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what's your typing speed?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>around 140 wpm. but can you beat me?</p>
-                <div class="typing-game" id="typing-game">
-                  <div class="typing-display" id="typing-display"></div>
-                  <input
-                    type="text"
-                    id="typing-input"
-                    class="typing-input"
-                    placeholder="click here and start typing..."
-                    autocomplete="off"
-                    autocapitalize="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                  />
-                  <div class="typing-stats">
-                    <span id="typing-wpm">0 wpm</span>
-                    <span id="typing-time">0.0s</span>
-                    <button type="button" id="typing-refresh" title="new words">refresh</button>
-                  </div>
-                  <p id="typing-result" class="typing-result"></p>
-                </div>
-              </div>
-            </details>
-
-            <details id="faq-favorite-food" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what's your favorite food?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  publix subs (hot honey chicken tender sub, white bread, no cheese, light black pepper, light lemon garlic aioli, light hot honey, light mayonnaise, toasted)
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-fruit" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">if you had to pick 1 fruit to eat for the rest of your life what would you choose?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  im between oranges and mangos. but i just have to choose oranges
-                </p>
-              </div>
-            </details>
-
-            <details id="faq-terminal-command" class="lore-entry">
-              <summary>
-                <div class="lore-meta">
-                  <span class="lore-title">what's your favorite terminal command?</span>
-                </div>
-                <span class="lore-summary-right">
-                  <span class="lore-toggle">+</span>
-                </span>
-              </summary>
-              <div class="lore-body">
-                <p>
-                  claude --dangerously-skip-permissions
-                </p>
-              </div>
-            </details>
-          </div>
-        </section>
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="ie=edge" http-equiv="X-UA-Compatible" />
+    <link href="/public/file.svg" rel="icon" />
+    <title>Ajioswxld | Lore</title>
+    <script>
+      (() => {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="/index.css" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+        --site-bg: #f6f4ee;
+        --site-text: #101114;
+        --site-muted: rgba(16, 17, 20, 0.68);
+        --site-border: rgba(0, 0, 0, 0.24);
+        --site-border-strong: rgba(0, 0, 0, 0.9);
+        --site-panel: #ffffff;
+        --site-panel-soft: #f1efe7;
+        --site-shadow: rgba(0, 0, 0, 0.12);
+        --site-shadow-strong: rgba(0, 0, 0, 0.5);
+        --site-link: #0f62fe;
+      }
+
+      html.dark {
+        color-scheme: dark;
+        --site-bg: #0d1016;
+        --site-text: #f5f7fb;
+        --site-muted: rgba(245, 247, 251, 0.72);
+        --site-border: rgba(255, 255, 255, 0.16);
+        --site-border-strong: rgba(255, 255, 255, 0.9);
+        --site-panel: #131823;
+        --site-panel-soft: #0f141d;
+        --site-shadow: rgba(0, 0, 0, 0.38);
+        --site-shadow-strong: rgba(255, 255, 255, 0.3);
+        --site-link: #8bb7ff;
+      }
+
+      body {
+        background: var(--site-bg);
+        color: var(--site-text);
+      }
+
+      .theme-toggle {
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--site-border-strong);
+        background: var(--site-panel);
+        color: var(--site-text);
+        box-shadow: 3px 3px 0 var(--site-shadow-strong);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.84rem;
+        line-height: 1;
+      }
+
+      .theme-toggle:hover {
+        background: var(--site-text);
+        color: var(--site-panel);
+      }
+
+      html.dark .theme-toggle {
+        color: #ffffff;
+      }
+
+      .theme-toggle-glyph {
+        width: 1rem;
+        height: 1rem;
+        display: block;
+        background-color: currentColor;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        -webkit-mask-size: contain;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z'/%3E%3C/svg%3E");
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z'/%3E%3C/svg%3E");
+      }
+
+      .theme-toggle-glyph.is-sun {
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Crect x='11.3' y='1.8' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='11.3' y='18.1' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='18.1' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='1.8' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='16.85' y='4.25' width='1.4' height='4' rx='0.7' transform='rotate(45 17.55 6.25)'/%3E%3Crect x='5.75' y='15.35' width='1.4' height='4' rx='0.7' transform='rotate(45 6.45 17.35)'/%3E%3Crect x='15.35' y='16.85' width='4' height='1.4' rx='0.7' transform='rotate(45 17.35 17.55)'/%3E%3Crect x='4.25' y='5.75' width='4' height='1.4' rx='0.7' transform='rotate(45 6.25 6.45)'/%3E%3C/g%3E%3C/svg%3E");
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Crect x='11.3' y='1.8' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='11.3' y='18.1' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='18.1' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='1.8' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='16.85' y='4.25' width='1.4' height='4' rx='0.7' transform='rotate(45 17.55 6.25)'/%3E%3Crect x='5.75' y='15.35' width='1.4' height='4' rx='0.7' transform='rotate(45 6.45 17.35)'/%3E%3Crect x='15.35' y='16.85' width='4' height='1.4' rx='0.7' transform='rotate(45 17.35 17.55)'/%3E%3Crect x='4.25' y='5.75' width='4' height='1.4' rx='0.7' transform='rotate(45 6.25 6.45)'/%3E%3C/g%3E%3C/svg%3E");
+      }
+    </style>
+    <style>
+      .lore-shell {
+        overflow: hidden;
+        background: var(--site-panel-soft);
+        border: 1px solid var(--site-border);
+        box-shadow: 6px 6px 0 var(--site-shadow);
+      }
+
+      .lore-hero {
+        padding: 1.15rem 1rem 1rem;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.12),
+            rgba(255, 255, 255, 0)
+          ),
+          var(--site-panel);
+      }
+
+      .lore-hero h2,
+      .lore-hero p {
+        margin: 0;
+      }
+
+      .lore-hero h2 {
+        font-size: 1.6rem;
+        line-height: 1;
+        text-transform: lowercase;
+      }
+
+      .lore-hero p {
+        margin-top: 0.35rem;
+        max-width: 58ch;
+        font-size: 1rem;
+        line-height: 1.35;
+        color: var(--site-muted);
+      }
+
+      .lore-section {
+        padding: 0 1rem 1rem;
+      }
+
+      .lore-section-label {
+        display: inline-block;
+        margin: 0.35rem 0 0.8rem;
+        padding: 0.22rem 0.52rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        background: color-mix(in srgb, var(--site-panel) 70%, #9db7ff);
+        border: 1px solid var(--site-border);
+      }
+
+      .lore-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        background:
+          repeating-linear-gradient(
+            0deg,
+            color-mix(in srgb, var(--site-text) 6%, transparent) 0,
+            color-mix(in srgb, var(--site-text) 6%, transparent) 1px,
+            transparent 1px,
+            transparent 22px
+          ),
+          var(--site-panel-soft);
+      }
+
+      .lore-entry {
+        border: 1px solid var(--site-border);
+        background: color-mix(in srgb, var(--site-panel) 92%, transparent);
+        box-shadow: 4px 4px 0 var(--site-shadow);
+        overflow: hidden;
+        transition:
+          box-shadow 180ms ease,
+          border-color 180ms ease,
+          background 180ms ease;
+      }
+
+      .lore-entry.is-targeted {
+        border-color: #e2b714;
+        background: color-mix(in srgb, var(--site-panel) 78%, #fff4bf);
+        box-shadow:
+          0 0 0 3px rgba(226, 183, 20, 0.18),
+          4px 4px 0 var(--site-shadow);
+      }
+
+      .lore-entry summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.85rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .lore-entry summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .lore-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+      }
+
+      .lore-summary-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        flex: 0 0 auto;
+      }
+
+      .lore-title {
+        font-size: 1rem;
+        line-height: 1.2;
+        font-weight: 700;
+      }
+
+      .lore-copy-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.35rem;
+        height: 1.35rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-panel);
+        box-shadow: 2px 2px 0 var(--site-shadow);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.8rem;
+        line-height: 1;
+      }
+
+      .lore-copy-link:hover {
+        background: var(--site-text);
+        color: var(--site-panel);
+      }
+
+      .lore-copy-link.is-copied {
+        width: auto;
+        padding: 0 0.45rem;
+        font-size: 0.62rem;
+      }
+
+      .lore-body {
+        font-weight: 400;
+      }
+
+      .lore-toggle {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.82rem;
+        opacity: 0.56;
+        transition: transform 120ms ease;
+      }
+
+      .lore-entry[open] .lore-toggle {
+        transform: rotate(45deg);
+      }
+
+      .lore-body {
+        padding: 0 1rem 1rem;
+        border-top: 1px solid var(--site-border);
+      }
+
+      .lore-body p {
+        margin: 0.75rem 0 0;
+        line-height: 1.55;
+      }
+
+      .guess-game {
+        margin-top: 0.75rem;
+      }
+
+      .guess-input-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .guess-input-row input {
+        width: 160px;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-panel);
+        color: var(--site-text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.9rem;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20%,
+        60% {
+          transform: translateX(-4px);
+        }
+        40%,
+        80% {
+          transform: translateX(4px);
+        }
+      }
+
+      .guess-result.shake {
+        animation: shake 0.3s ease;
+      }
+
+      .guess-input-row button {
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-panel);
+        color: var(--site-text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+
+      .guess-input-row button:hover {
+        background: var(--site-panel-soft);
+      }
+
+      .guess-result {
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 600;
+      }
+
+      .guess-result.correct {
+        color: #1ca34b;
+      }
+
+      .typing-game {
+        margin-top: 0.75rem;
+      }
+
+      .typing-display {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        padding: 1rem;
+        background: #2b2b2b;
+        color: #646669;
+        border: 1px solid var(--site-border);
+        letter-spacing: 0.02em;
+        user-select: none;
+      }
+
+      .typing-display .correct {
+        color: #d1d0c5;
+      }
+
+      .typing-display .incorrect {
+        color: #ca4754;
+        text-decoration: underline;
+      }
+
+      .typing-display .current {
+        border-left: 2px solid transparent;
+        margin-left: -1px;
+      }
+
+      .typing-game.focused .typing-display .current {
+        border-left-color: #e2b714;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          border-color: #e2b714;
+        }
+        51%,
+        100% {
+          border-color: transparent;
+        }
+      }
+
+      .typing-input {
+        width: 100%;
+        margin-top: 0.75rem;
+        padding: 0.6rem 0.8rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 1rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-panel);
+        color: var(--site-text);
+      }
+
+      .typing-input:focus {
+        outline: 2px solid #e2b714;
+        outline-offset: -2px;
+      }
+
+      .typing-stats {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.6rem;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.9rem;
+      }
+
+      .typing-stats span {
+        color: var(--site-muted);
+      }
+
+      .typing-stats #typing-wpm {
+        color: #e2b714;
+        font-weight: 600;
+      }
+
+      .typing-stats button {
+        margin-left: auto;
+        padding: 0.3rem 0.6rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-panel);
+        color: var(--site-text);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+
+      .typing-stats button:hover {
+        background: var(--site-panel-soft);
+      }
+
+      .typing-result {
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 600;
+      }
+
+      .typing-result.win {
+        color: #1ca34b;
+      }
+
+      .typing-result.lose {
+        color: #ca4754;
+      }
+    </style>
+    <script>
+      /*to prevent Firefox FOUC, this must be here*/
+      let FF_FOUC_FIX;
+    </script>
+    <script
+      async=""
+      data-goatcounter="https://GOATCOUNTER_CODE.goatcounter.com/count"
+      src="//gc.zgo.at/count.js"
+    ></script>
+    <meta content="https://ajioswxld.me/random/lore" property="og:url" />
+    <meta content="Aji Bimantoro | Lore" property="og:title" />
+    <meta
+      content="Aji Bimantoro's story notes, side quests, and builder lore"
+      property="og:description"
+    />
+    <meta content="https://ajioswxld.me/assets/me.jpg" property="og:image" />
+    <meta content="website" property="og:type" />
+    <meta
+      content="Aji Bimantoro's story notes, side quests, and builder lore"
+      name="description"
+    />
+    <meta content="ajioswxld.me" property="twitter:domain" />
+    <meta content="summary_large_image" name="twitter:card" />
+    <meta content="@adv-ajioswxld" name="twitter:site" />
+    <meta content="https://ajioswxld.me/random/lore" property="twitter:url" />
+    <meta content="Aji Bimantoro | Lore" name="twitter:title" />
+    <meta
+      content="Aji Bimantoro's story notes, side quests, and builder lore"
+      name="twitter:description"
+    />
+    <meta content="https://ajioswxld.me/assets/me.jpg" name="twitter:image" />
+  </head>
+  <body>
+    <main
+      class="flex min-h-screen flex-col max-w-5xl mx-auto px-4 py-4 sm:py-8 leading-5 font-sans"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3"
+      >
+        <a href="/">
+          <h1 class="font-mono text-2xl font-bold">Purbo (Aji) Bimantoro</h1>
+        </a>
+        <div
+          class="grid grid-cols-2 sm:flex gap-2 items-stretch sm:items-center w-full sm:w-auto my-1"
+        >
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0 bg-[#0077b5] text-white"
+            href="https://www.linkedin.com/in/purboajibimantoro/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/linkedin.svg');"
+            ></div>
+            <span class="ms-1">LinkedIn</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://github.com/ajithropic"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/github.svg');"
+            ></div>
+            <span class="ms-1">GitHub</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://x.com/ajithropic"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div class="icon" style="mask-image: url('/assets/x.svg');"></div>
+            <span class="ms-1">X</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://letterboxd.com/vrkael/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/roblox.svg');"
+            ></div>
+            <span class="ms-1">Letterboxd</span>
+          </a>
+          <button
+            aria-label="Toggle dark mode"
+            class="theme-toggle col-span-2 justify-self-end sm:justify-self-auto"
+            id="theme-toggle"
+            title="Toggle dark mode"
+            type="button"
+          >
+            <span class="theme-toggle-glyph" id="theme-toggle-icon"></span>
+          </button>
+        </div>
       </div>
-    {% endcall %}
-  </div>
-{% endblock %}
+      <div class="flex flex-col gap-4">
+        <fieldset
+          class="border-t md:border border-solid border-black dark:border-white min-w-0 p-1 md:p-4 pt-2"
+        >
+          <legend class="ms-4 md:ms-0">
+            <h6 class="text-lg mx-2 font-mono italic">cat ~/random/lore.md</h6>
+          </legend>
+          <div class="lore-shell">
+            <section class="lore-hero">
+              <h2>lore</h2>
+              <p>(my life's faqs)</p>
+            </section>
+            <section class="lore-section">
+              <p class="lore-section-label">life</p>
+              <div class="lore-list">
+                <details class="lore-entry" id="faq-about" open="">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">so tell me about yourself</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      hey! i'm aji. cs major at Amikom University, and i like building things that people
+                      actually use.
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-why-cs">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">why computer science?</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      honestly i never planned on it. my dad had me watching top
+                      gun since i was five and i wanted to be a fighter pilot
+                      for years. probably watched that movie 30+ times. then i
+                      learned you could die doing that so i pivoted to aerospace
+                      engineering - figured i'd test fighter jets in simulations
+                      instead.
+                    </p>
+                    <p>
+                      but i'd also been on computers since i was like eight.
+                      spent a lot of time in minecraft building redstone
+                      contraptions - hidden piston doors, following tutorials,
+                      making my own stuff. sort of like forking repos before i
+                      knew what that meant.
+                    </p>
+                    <p>
+                      took my first cs in high school and it clicked. not
+                      love at first sight, but i realized cs lets you build
+                      solutions in almost any discipline. that's still what i
+                      believe and it keeps proving itself. it's not really the
+                      coding i enjoy - it's being able to make things people can
+                      actually use and see the impact.
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-weakness">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >what's your biggest weakness?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      i say "this should only take a weekend" way too often. and
+                      then it doesn't.
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-five-years">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >where do you see yourself in 5 years?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      honestly? no idea. probably still building stuff and
+                      figuring it out as i go. that's worked so far.
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-fun">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">what do you do for fun?</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      playing video games with friends, running, watch movies,
+                      meeting new people. i like being around people.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section class="lore-section">
+              <p class="lore-section-label">building</p>
+              <div class="lore-list">
+                <details class="lore-entry" id="faq-building-now">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >what are you working on right now?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      preparing for hackathons, learning to make games, learning about the stock market
+                      and a for-funsies trading algo using some statistical concepts
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-learning">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >how do you learn new stuff?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      i just start building and figure it out as i go. if i get
+                      stuck i'll read docs or ask someone but i learn best by
+                      doing.
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-stack">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">what's your tech stack?</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      whatever my team is using :) i'm flexible. but my go-to
+                      stack when i'm solo is js/html, python.
+                    </p>
+                  </div>
+                </details>
+              </div>
+            </section>
+            <section class="lore-section">
+              <p class="lore-section-label">random</p>
+              <div class="lore-list">
+                <details class="lore-entry" id="faq-typing-speed">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">what's your typing speed?</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>around 10 wpm. but can you beat me?</p>
+                    <div class="typing-game" id="typing-game">
+                      <div class="typing-display" id="typing-display"></div>
+                      <input
+                        autocapitalize="off"
+                        autocomplete="off"
+                        autocorrect="off"
+                        class="typing-input"
+                        id="typing-input"
+                        placeholder="click here and start typing..."
+                        spellcheck="false"
+                        type="text"
+                      />
+                      <div class="typing-stats">
+                        <span id="typing-wpm">0 wpm</span>
+                        <span id="typing-time">0.0s</span>
+                        <button
+                          id="typing-refresh"
+                          title="new words"
+                          type="button"
+                        >
+                          refresh
+                        </button>
+                      </div>
+                      <p class="typing-result" id="typing-result"></p>
+                    </div>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-favorite-food">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title">what's your favorite food?</span>
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      I usually like everything, and if it’s spicy, I won’t eat it. But if I had to choose, I’d say my favorite food is fruit salad
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-fruit">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >if you had to pick 1 fruit to eat for the rest of your
+                        life what would you choose?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>
+                      im between oranges and mangos. but i just have to choose
+                      oranges
+                    </p>
+                  </div>
+                </details>
+                <details class="lore-entry" id="faq-terminal-command">
+                  <summary>
+                    <div class="lore-meta">
+                      <span class="lore-title"
+                        >what's your favorite terminal command?</span
+                      >
+                    </div>
+                    <span class="lore-summary-right">
+                      <span class="lore-toggle">+</span>
+                    </span>
+                  </summary>
+                  <div class="lore-body">
+                    <p>claude --dangerously-skip-permissions</p>
+                  </div>
+                </details>
+              </div>
+            </section>
+          </div>
+        </fieldset>
+      </div>
+      <div class="h-3"></div>
+      <fieldset
+        class="border-t md:border border-solid border-black dark:border-white min-w-0 p-1 md:p-4 pt-2"
+      >
+        <legend class="ms-4 md:ms-0">
+          <h6 class="text-lg mx-2 font-mono italic">cat README.md</h6>
+        </legend>
+        <div class="flex flex-row justify-between">
+          <span class="prose dark:prose-invert">
+            Source code on
+            <a href="https://github.com/sagarreddypatil/portfolio-website">
+              GitHub
+            </a>
+            thanks to
+            <a href="https://sagarpatil.me/"> Sagar Patil </a>
+          </span>
+        </div>
+      </fieldset>
+    </main>
+    <script>
+      (() => {
+        const entries = [...document.querySelectorAll(".lore-entry[id]")];
 
-{% block scripts %}
-  <script>
-    (() => {
-      const entries = [...document.querySelectorAll(".lore-entry[id]")];
-
-      function buildLink(entryId) {
-        const url = new URL(window.location.href);
-        url.hash = entryId;
-        return url.toString();
-      }
-
-      async function copyLink(entry, button) {
-        const link = buildLink(entry.id);
-        try {
-          await navigator.clipboard.writeText(link);
-        } catch {
-          const temp = document.createElement("input");
-          temp.value = link;
-          document.body.appendChild(temp);
-          temp.select();
-          document.execCommand("copy");
-          temp.remove();
+        function buildLink(entryId) {
+          const url = new URL(window.location.href);
+          url.hash = entryId;
+          return url.toString();
         }
 
-        const original = button.textContent;
-        button.textContent = "copied";
-        button.classList.add("is-copied");
-        window.setTimeout(() => {
-          button.textContent = original;
-          button.classList.remove("is-copied");
-        }, 1200);
-      }
+        async function copyLink(entry, button) {
+          const link = buildLink(entry.id);
+          try {
+            await navigator.clipboard.writeText(link);
+          } catch {
+            const temp = document.createElement("input");
+            temp.value = link;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            temp.remove();
+          }
 
-      function openEntryFromHash() {
-        entries.forEach((entry) => entry.classList.remove("is-targeted"));
-
-        const id = window.location.hash.replace(/^#/, "");
-        if (!id) {
-          return;
+          const original = button.textContent;
+          button.textContent = "copied";
+          button.classList.add("is-copied");
+          window.setTimeout(() => {
+            button.textContent = original;
+            button.classList.remove("is-copied");
+          }, 1200);
         }
 
-        const target = document.getElementById(id);
-        if (!(target instanceof HTMLDetailsElement)) {
-          return;
+        function openEntryFromHash() {
+          entries.forEach((entry) => entry.classList.remove("is-targeted"));
+
+          const id = window.location.hash.replace(/^#/, "");
+          if (!id) {
+            return;
+          }
+
+          const target = document.getElementById(id);
+          if (!(target instanceof HTMLDetailsElement)) {
+            return;
+          }
+
+          target.open = true;
+          target.classList.add("is-targeted");
+          window.setTimeout(() => {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 80);
         }
 
-        target.open = true;
-        target.classList.add("is-targeted");
-        window.setTimeout(() => {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 80);
-      }
+        entries.forEach((entry) => {
+          const right = entry.querySelector(".lore-summary-right");
+          if (!right) {
+            return;
+          }
 
-      entries.forEach((entry) => {
-        const right = entry.querySelector(".lore-summary-right");
-        if (!right) {
-          return;
-        }
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "lore-copy-link";
+          button.textContent = "#";
+          button.setAttribute("aria-label", `Copy link to ${entry.id}`);
 
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "lore-copy-link";
-        button.textContent = "#";
-        button.setAttribute("aria-label", `Copy link to ${entry.id}`);
+          button.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            copyLink(entry, button);
+          });
 
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          copyLink(entry, button);
+          right.prepend(button);
         });
 
-        right.prepend(button);
-      });
+        window.addEventListener("hashchange", openEntryFromHash);
+        openEntryFromHash();
+      })();
 
-      window.addEventListener("hashchange", openEntryFromHash);
-      openEntryFromHash();
-    })();
+      (() => {
+        const sentences = [
+          "bro trust me the code works i tested it once already",
+          "claude make a super viral roblox game make no mistakes",
+          "openclaw claude max plan ralph loop superpowers dangerously skip permissions",
+          "hackathon starts in two hours and we have no idea yet",
+          "i have a girlfriend lets go dude",
+          "its not a bug its a feature trust the process here",
+          "top gun is the greatest movie ever made no debate needed",
+          "i like persona song and persona 5 is the best game ever made",
+        ];
 
-    (() => {
-      const sentences = [
-        "bro trust me the code works i tested it once already",
-        "claude make a super viral roblox game make no mistakes",
-        "openclaw claude max plan ralph loop superpowers dangerously skip permissions",
-        "hackathon starts in two hours and we have no idea yet",
-        "my roblox game just hit a million plays lets go dude",
-        "its not a bug its a feature trust the process here",
-        "top gun is the greatest movie ever made no debate needed",
-        "twenty nine failed roblox games and counting but we move forward"
-      ];
+        const display = document.getElementById("typing-display");
+        const input = document.getElementById("typing-input");
+        const wpmEl = document.getElementById("typing-wpm");
+        const timeEl = document.getElementById("typing-time");
+        const refreshBtn = document.getElementById("typing-refresh");
+        const resultEl = document.getElementById("typing-result");
 
-      const display = document.getElementById("typing-display");
-      const input = document.getElementById("typing-input");
-      const wpmEl = document.getElementById("typing-wpm");
-      const timeEl = document.getElementById("typing-time");
-      const refreshBtn = document.getElementById("typing-refresh");
-      const resultEl = document.getElementById("typing-result");
+        if (!display || !input) return;
 
-      if (!display || !input) return;
+        let currentSentence = "";
+        let startTime = null;
+        let timerInterval = null;
+        let finished = false;
 
-      let currentSentence = "";
-      let startTime = null;
-      let timerInterval = null;
-      let finished = false;
-
-      function pickSentence() {
-        return sentences[Math.floor(Math.random() * sentences.length)];
-      }
-
-      function render() {
-        const typed = input.value;
-        let html = "";
-
-        for (let i = 0; i < currentSentence.length; i++) {
-          const char = currentSentence[i];
-          if (i < typed.length) {
-            if (typed[i] === char) {
-              html += `<span class="correct">${char}</span>`;
-            } else {
-              html += `<span class="incorrect">${char}</span>`;
-            }
-          } else if (i === typed.length) {
-            html += `<span class="current">${char}</span>`;
-          } else {
-            html += char;
-          }
+        function pickSentence() {
+          return sentences[Math.floor(Math.random() * sentences.length)];
         }
 
-        display.innerHTML = html;
-      }
+        function render() {
+          const typed = input.value;
+          let html = "";
 
-      function reset() {
-        currentSentence = pickSentence();
-        input.value = "";
-        input.disabled = false;
-        startTime = null;
-        finished = false;
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = null;
-        wpmEl.textContent = "0 wpm";
-        timeEl.textContent = "0.0s";
-        resultEl.textContent = "";
-        resultEl.className = "typing-result";
-        render();
-        input.focus();
-      }
+          for (let i = 0; i < currentSentence.length; i++) {
+            const char = currentSentence[i];
+            if (i < typed.length) {
+              if (typed[i] === char) {
+                html += `<span class="correct">${char}</span>`;
+              } else {
+                html += `<span class="incorrect">${char}</span>`;
+              }
+            } else if (i === typed.length) {
+              html += `<span class="current">${char}</span>`;
+            } else {
+              html += char;
+            }
+          }
 
-      function updateTimer() {
-        if (!startTime || finished) return;
-        const elapsed = (Date.now() - startTime) / 1000;
-        timeEl.textContent = elapsed.toFixed(1) + "s";
+          display.innerHTML = html;
+        }
 
-        const typed = input.value;
-        const words = typed.trim().split(/\s+/).filter(w => w).length;
-        const wpm = elapsed > 0 ? Math.round((words / elapsed) * 60) : 0;
-        wpmEl.textContent = wpm + " wpm";
-      }
-
-      function checkFinish() {
-        if (input.value === currentSentence) {
-          finished = true;
+        function reset() {
+          currentSentence = pickSentence();
+          input.value = "";
+          input.disabled = false;
+          startTime = null;
+          finished = false;
           if (timerInterval) clearInterval(timerInterval);
-          input.disabled = true;
+          timerInterval = null;
+          wpmEl.textContent = "0 wpm";
+          timeEl.textContent = "0.0s";
+          resultEl.textContent = "";
+          resultEl.className = "typing-result";
+          render();
+          input.focus();
+        }
 
+        function updateTimer() {
+          if (!startTime || finished) return;
           const elapsed = (Date.now() - startTime) / 1000;
-          const words = currentSentence.trim().split(/\s+/).length;
-          const finalWpm = Math.round((words / elapsed) * 60);
-
-          wpmEl.textContent = finalWpm + " wpm";
           timeEl.textContent = elapsed.toFixed(1) + "s";
 
-          if (finalWpm >= 140) {
-            resultEl.textContent = "you beat me! gg";
-            resultEl.className = "typing-result win";
-          } else {
-            resultEl.textContent = "try again!";
-            resultEl.className = "typing-result lose";
+          const typed = input.value;
+          const words = typed
+            .trim()
+            .split(/\s+/)
+            .filter((w) => w).length;
+          const wpm = elapsed > 0 ? Math.round((words / elapsed) * 60) : 0;
+          wpmEl.textContent = wpm + " wpm";
+        }
+
+        function checkFinish() {
+          if (input.value === currentSentence) {
+            finished = true;
+            if (timerInterval) clearInterval(timerInterval);
+            input.disabled = true;
+
+            const elapsed = (Date.now() - startTime) / 1000;
+            const words = currentSentence.trim().split(/\s+/).length;
+            const finalWpm = Math.round((words / elapsed) * 60);
+
+            wpmEl.textContent = finalWpm + " wpm";
+            timeEl.textContent = elapsed.toFixed(1) + "s";
+
+            if (finalWpm >= 140) {
+              resultEl.textContent = "you beat me! gg";
+              resultEl.className = "typing-result win";
+            } else {
+              resultEl.textContent = "try again!";
+              resultEl.className = "typing-result lose";
+            }
           }
         }
-      }
 
-      const game = document.getElementById("typing-game");
+        const game = document.getElementById("typing-game");
 
-      input.addEventListener("focus", () => {
-        game.classList.add("focused");
-      });
+        input.addEventListener("focus", () => {
+          game.classList.add("focused");
+        });
 
-      input.addEventListener("blur", () => {
-        game.classList.remove("focused");
-      });
+        input.addEventListener("blur", () => {
+          game.classList.remove("focused");
+        });
 
-      input.addEventListener("input", () => {
-        if (!startTime && input.value.length === 1) {
-          startTime = Date.now();
-          timerInterval = setInterval(updateTimer, 100);
-        }
-        render();
-        checkFinish();
-      });
+        input.addEventListener("input", () => {
+          if (!startTime && input.value.length === 1) {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 100);
+          }
+          render();
+          checkFinish();
+        });
 
-      refreshBtn.addEventListener("click", reset);
+        refreshBtn.addEventListener("click", reset);
 
-      reset();
-    })();
+        reset();
+      })();
 
-    (() => {
-      const answer = 29;
-      const input = document.getElementById("guess-input");
-      const submitBtn = document.getElementById("guess-submit");
-      const giveupBtn = document.getElementById("guess-giveup");
-      const result = document.getElementById("guess-result");
+      (() => {
+        const answer = 29;
+        const input = document.getElementById("guess-input");
+        const submitBtn = document.getElementById("guess-submit");
+        const giveupBtn = document.getElementById("guess-giveup");
+        const result = document.getElementById("guess-result");
 
-      if (!input || !submitBtn || !giveupBtn || !result) return;
+        if (!input || !submitBtn || !giveupBtn || !result) return;
 
-      function checkGuess() {
-        const guess = parseInt(input.value, 10);
-        if (isNaN(guess)) {
-          result.textContent = "enter a number!";
+        function checkGuess() {
+          const guess = parseInt(input.value, 10);
+          if (isNaN(guess)) {
+            result.textContent = "enter a number!";
+            result.classList.remove("correct");
+            return;
+          }
+
+          let newText;
+          if (guess < answer) {
+            newText = "higher!";
+          } else if (guess > answer) {
+            newText = "lower!";
+          } else {
+            result.textContent = "YES! 29 failed games. pain.";
+            result.classList.add("correct");
+            input.disabled = true;
+            submitBtn.disabled = true;
+            giveupBtn.disabled = true;
+            return;
+          }
+
           result.classList.remove("correct");
-          return;
+          if (result.textContent === newText) {
+            result.classList.remove("shake");
+            void result.offsetWidth;
+            result.classList.add("shake");
+          }
+          result.textContent = newText;
         }
 
-        let newText;
-        if (guess < answer) {
-          newText = "higher!";
-        } else if (guess > answer) {
-          newText = "lower!";
-        } else {
-          result.textContent = "YES! 29 failed games. pain.";
-          result.classList.add("correct");
+        function giveUp() {
+          result.textContent = "it's 29. yeah.";
+          result.classList.remove("correct");
           input.disabled = true;
           submitBtn.disabled = true;
           giveupBtn.disabled = true;
-          return;
         }
 
-        result.classList.remove("correct");
-        if (result.textContent === newText) {
-          result.classList.remove("shake");
-          void result.offsetWidth;
-          result.classList.add("shake");
+        submitBtn.addEventListener("click", checkGuess);
+        giveupBtn.addEventListener("click", giveUp);
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") checkGuess();
+        });
+      })();
+    </script>
+    <script>
+      (() => {
+        const toggle = document.getElementById("theme-toggle");
+        const icon = document.getElementById("theme-toggle-icon");
+        const root = document.documentElement;
+
+        function syncThemeIcon() {
+          if (icon) {
+            icon.classList.toggle("is-sun", root.classList.contains("dark"));
+          }
         }
-        result.textContent = newText;
-      }
 
-      function giveUp() {
-        result.textContent = "it's 29. yeah.";
-        result.classList.remove("correct");
-        input.disabled = true;
-        submitBtn.disabled = true;
-        giveupBtn.disabled = true;
-      }
-
-      submitBtn.addEventListener("click", checkGuess);
-      giveupBtn.addEventListener("click", giveUp);
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") checkGuess();
-      });
-    })();
-  </script>
-{% endblock %}
+        if (toggle) {
+          syncThemeIcon();
+          toggle.addEventListener("click", () => {
+            root.classList.toggle("dark");
+            localStorage.setItem(
+              "theme",
+              root.classList.contains("dark") ? "dark" : "light",
+            );
+            syncThemeIcon();
+          });
+        }
+      })();
+    </script>
+    <script
+      async=""
+      id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+  </body>
+</html>

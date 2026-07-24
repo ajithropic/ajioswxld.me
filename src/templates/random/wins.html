@@ -1,605 +1,355 @@
-{% extends "layout.html" %}
-{% from "components/fieldset.html" import fieldset %}
+<!doctype html>
 
-{% block head_extra %}
-  <style>
-    .case-shell {
-      overflow: hidden;
-      background: var(--site-panel-soft);
-      border: 1px solid var(--site-border);
-      box-shadow: 6px 6px 0 var(--site-shadow);
-    }
-
-    .case-hero {
-      padding: 1rem 1rem 0.85rem;
-      border-bottom: 1px solid var(--site-border);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0)),
-        var(--site-panel);
-    }
-
-    .case-hero h2,
-    .case-hero p {
-      margin: 0;
-    }
-
-    .case-hero h2 {
-      font-size: 1.45rem;
-      line-height: 1;
-      text-transform: lowercase;
-      letter-spacing: 0.02em;
-    }
-
-    .case-hero p {
-      margin-top: 0.45rem;
-      max-width: 56ch;
-      font-size: 0.95rem;
-      line-height: 1.45;
-      color: var(--site-muted);
-    }
-
-    .case-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem 0.8rem;
-      padding: 1rem;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
-        var(--site-panel-soft);
-    }
-
-    .case-slot {
-      position: relative;
-      min-height: 240px;
-      padding: 0.4rem 0.4rem 1.35rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      text-align: center;
-      outline: none;
-    }
-
-    .case-slot::after {
-      content: "";
-      position: absolute;
-      left: 0.35rem;
-      right: 0.35rem;
-      bottom: 0.25rem;
-      height: 12px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent),
-        #8a5b39;
-      box-shadow:
-        0 4px 0 #5d3820,
-        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
-    }
-
-    .trophy {
-      --metal: #d0a63d;
-      --metal-shadow: #9b7621;
-      --metal-highlight: #f6de84;
-      position: relative;
-      width: 92px;
-      height: 116px;
-      margin-bottom: 0.75rem;
-      filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.14));
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .case-slot:hover .trophy,
-    .case-slot:focus-within .trophy {
-      transform: translateY(-12px);
-    }
-
-    .trophy.nvidia {
-      --metal: #76b900;
-      --metal-shadow: #4f7b00;
-      --metal-highlight: #c9ef7a;
-    }
-
-    .trophy.roblox {
-      --metal: #e2231a;
-      --metal-shadow: #9e1812;
-      --metal-highlight: #ff9f99;
-    }
-
-    .trophy.adtran {
-      --metal: #1f74c9;
-      --metal-shadow: #154d86;
-      --metal-highlight: #a8d0fb;
-    }
-
-    .trophy.swamp {
-      --metal: #ff8c2a;
-      --metal-shadow: #a75814;
-      --metal-highlight: #ffd2ab;
-    }
-
-    .trophy.shpe {
-      --metal: #6b5dd3;
-      --metal-shadow: #43388b;
-      --metal-highlight: #d1c8ff;
-    }
-
-    .trophy.usf {
-      --metal: #0b8a55;
-      --metal-shadow: #065534;
-      --metal-highlight: #8fe0bc;
-    }
-
-    .trophy.anthropic {
-      --metal: #c9783c;
-      --metal-shadow: #7d4922;
-      --metal-highlight: #efc3a2;
-    }
-
-    .trophy.sase {
-      --metal: #f2a531;
-      --metal-shadow: #a96a12;
-      --metal-highlight: #ffe0a6;
-    }
-
-    .trophy.rl {
-      --metal: #3f7cff;
-      --metal-shadow: #274d9b;
-      --metal-highlight: #bad0ff;
-    }
-
-    .trophy.swim {
-      --metal: #3cb6c9;
-      --metal-shadow: #237380;
-      --metal-highlight: #b8eef6;
-    }
-
-    .trophy.climb {
-      --metal: #7a8f54;
-      --metal-shadow: #4c5c33;
-      --metal-highlight: #d4e4b3;
-    }
-
-    .trophy-bowl {
-      position: absolute;
-      left: 24px;
-      top: 8px;
-      width: 44px;
-      height: 34px;
-      background: var(--metal);
-      border: 2px solid var(--metal-shadow);
-      border-radius: 0 0 12px 12px;
-      box-shadow: inset 0 3px 0 var(--metal-highlight);
-    }
-
-    .trophy-bowl::before,
-    .trophy-bowl::after {
-      content: "";
-      position: absolute;
-      top: 7px;
-      width: 14px;
-      height: 14px;
-      border: 4px solid var(--metal-shadow);
-      border-radius: 999px;
-    }
-
-    .trophy-bowl::before {
-      left: -16px;
-      border-right: none;
-    }
-
-    .trophy-bowl::after {
-      right: -16px;
-      border-left: none;
-    }
-
-    .trophy-stem {
-      position: absolute;
-      left: 41px;
-      top: 46px;
-      width: 10px;
-      height: 22px;
-      background: var(--metal);
-      border-left: 2px solid var(--metal-shadow);
-      border-right: 2px solid var(--metal-shadow);
-    }
-
-    .trophy-foot {
-      position: absolute;
-      left: 32px;
-      top: 68px;
-      width: 28px;
-      height: 10px;
-      background: var(--metal);
-      border: 2px solid var(--metal-shadow);
-      box-shadow: inset 0 2px 0 var(--metal-highlight);
-    }
-
-    .trophy-base {
-      position: absolute;
-      left: 22px;
-      top: 84px;
-      width: 48px;
-      height: 18px;
-      background: #3f2b1e;
-      border: 2px solid #24170f;
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    .trophy-plaque {
-      width: 100%;
-      max-width: 168px;
-      padding: 0.7rem 0.75rem;
-      border: 1px solid var(--site-border);
-      background: color-mix(in srgb, var(--site-panel) 82%, transparent);
-      box-shadow: 4px 4px 0 var(--site-shadow);
-    }
-
-    .trophy-plaque p {
-      margin: 0;
-    }
-
-    .trophy-title {
-      font-size: 0.98rem;
-      line-height: 1.18;
-      text-transform: lowercase;
-    }
-
-    .trophy-meta {
-      margin-top: 0.4rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.72rem;
-      line-height: 1.35;
-      color: var(--site-muted);
-    }
-
-    .trophy-tooltip {
-      position: absolute;
-      left: 50%;
-      top: 0.4rem;
-      width: min(220px, calc(100vw - 3rem));
-      transform: translate(-50%, -100%);
-      border: 1px solid var(--site-border);
-      background: var(--site-panel);
-      box-shadow: 4px 4px 0 var(--site-shadow);
-      padding: 0.7rem 0.75rem;
-      text-align: left;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 140ms ease, transform 140ms ease;
-      z-index: 5;
-    }
-
-    .case-slot:hover .trophy-tooltip,
-    .case-slot:focus-within .trophy-tooltip {
-      opacity: 1;
-      transform: translate(-50%, calc(-100% - 0.35rem));
-    }
-
-    .trophy-tooltip p {
-      margin: 0;
-      font-size: 0.82rem;
-      line-height: 1.45;
-      color: var(--site-muted);
-    }
-
-    @media (max-width: 900px) {
-      .case-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="ie=edge" http-equiv="X-UA-Compatible" />
+    <link href="/public/file.svg" rel="icon" />
+    <title>Ajioswxld | Wins</title>
+    <script>
+      (() => {
+        const storedTheme = localStorage.getItem("theme");
+        if (storedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="/index.css" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+        --site-bg: #f6f4ee;
+        --site-text: #101114;
+        --site-muted: rgba(16, 17, 20, 0.68);
+        --site-border: rgba(0, 0, 0, 0.24);
+        --site-border-strong: rgba(0, 0, 0, 0.9);
+        --site-panel: #ffffff;
+        --site-panel-soft: #f1efe7;
+        --site-shadow: rgba(0, 0, 0, 0.12);
+        --site-shadow-strong: rgba(0, 0, 0, 0.5);
+        --site-link: #0f62fe;
       }
-    }
 
-    @media (max-width: 560px) {
+      html.dark {
+        color-scheme: dark;
+        --site-bg: #0d1016;
+        --site-text: #f5f7fb;
+        --site-muted: rgba(245, 247, 251, 0.72);
+        --site-border: rgba(255, 255, 255, 0.16);
+        --site-border-strong: rgba(255, 255, 255, 0.9);
+        --site-panel: #131823;
+        --site-panel-soft: #0f141d;
+        --site-shadow: rgba(0, 0, 0, 0.38);
+        --site-shadow-strong: rgba(255, 255, 255, 0.3);
+        --site-link: #8bb7ff;
+      }
+
+      body {
+        background: var(--site-bg);
+        color: var(--site-text);
+      }
+
+      .theme-toggle {
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--site-border-strong);
+        background: var(--site-panel);
+        color: var(--site-text);
+        box-shadow: 3px 3px 0 var(--site-shadow-strong);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.84rem;
+        line-height: 1;
+      }
+
+      .theme-toggle:hover {
+        background: var(--site-text);
+        color: var(--site-panel);
+      }
+
+      html.dark .theme-toggle {
+        color: #ffffff;
+      }
+
+      .theme-toggle-glyph {
+        width: 1rem;
+        height: 1rem;
+        display: block;
+        background-color: currentColor;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        -webkit-mask-size: contain;
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z'/%3E%3C/svg%3E");
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M20 14.5A8.5 8.5 0 1 1 9.5 4 6.8 6.8 0 0 0 20 14.5Z'/%3E%3C/svg%3E");
+      }
+
+      .theme-toggle-glyph.is-sun {
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Crect x='11.3' y='1.8' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='11.3' y='18.1' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='18.1' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='1.8' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='16.85' y='4.25' width='1.4' height='4' rx='0.7' transform='rotate(45 17.55 6.25)'/%3E%3Crect x='5.75' y='15.35' width='1.4' height='4' rx='0.7' transform='rotate(45 6.45 17.35)'/%3E%3Crect x='15.35' y='16.85' width='4' height='1.4' rx='0.7' transform='rotate(45 17.35 17.55)'/%3E%3Crect x='4.25' y='5.75' width='4' height='1.4' rx='0.7' transform='rotate(45 6.25 6.45)'/%3E%3C/g%3E%3C/svg%3E");
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Crect x='11.3' y='1.8' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='11.3' y='18.1' width='1.4' height='4.1' rx='0.7'/%3E%3Crect x='18.1' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='1.8' y='11.3' width='4.1' height='1.4' rx='0.7'/%3E%3Crect x='16.85' y='4.25' width='1.4' height='4' rx='0.7' transform='rotate(45 17.55 6.25)'/%3E%3Crect x='5.75' y='15.35' width='1.4' height='4' rx='0.7' transform='rotate(45 6.45 17.35)'/%3E%3Crect x='15.35' y='16.85' width='4' height='1.4' rx='0.7' transform='rotate(45 17.35 17.55)'/%3E%3Crect x='4.25' y='5.75' width='4' height='1.4' rx='0.7' transform='rotate(45 6.25 6.45)'/%3E%3C/g%3E%3C/svg%3E");
+      }
+    </style>
+    <style>
+      .case-shell {
+        overflow: hidden;
+        background: var(--site-panel-soft);
+        border: 1px solid var(--site-border);
+        box-shadow: 6px 6px 0 var(--site-shadow);
+      }
+
       .case-hero {
-        padding: 0.8rem 0.8rem 0.7rem;
+        padding: 1rem 1rem 0.85rem;
+        border-bottom: 1px solid var(--site-border);
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.12),
+            rgba(255, 255, 255, 0)
+          ),
+          var(--site-panel);
+      }
+
+      .case-hero h2,
+      .case-hero p {
+        margin: 0;
       }
 
       .case-hero h2 {
-        font-size: 1.18rem;
+        font-size: 1.45rem;
+        line-height: 1;
+        text-transform: lowercase;
+        letter-spacing: 0.02em;
       }
 
       .case-hero p {
-        margin-top: 0.35rem;
-        font-size: 0.82rem;
-        line-height: 1.4;
+        margin-top: 0.45rem;
+        max-width: 56ch;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        color: var(--site-muted);
       }
 
-      .case-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem 0.55rem;
-        padding: 0.75rem;
+      .case-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        font-style: italic;
+        color: var(--site-muted);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%),
+          var(--site-panel-soft);
       }
 
-      .case-slot {
-        min-height: 184px;
-        padding: 0.2rem 0.15rem 1rem;
+      .case-empty p {
+        margin: 0;
       }
 
-      .trophy {
-        width: 76px;
-        height: 96px;
-        margin-bottom: 0.4rem;
-        filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.12));
+      @media (max-width: 560px) {
+        .case-hero {
+          padding: 0.8rem 0.8rem 0.7rem;
+        }
+
+        .case-hero h2 {
+          font-size: 1.18rem;
+        }
+
+        .case-hero p {
+          margin-top: 0.35rem;
+          font-size: 0.82rem;
+          line-height: 1.4;
+        }
+
+        .case-empty {
+          padding: 1.75rem 0.8rem;
+        }
       }
-
-      .trophy-plaque {
-        max-width: 100%;
-        padding: 0.45rem 0.48rem;
-        box-shadow: 3px 3px 0 var(--site-shadow);
-      }
-
-      .trophy-title {
-        font-size: 0.78rem;
-        line-height: 1.15;
-      }
-
-      .trophy-meta {
-        margin-top: 0.25rem;
-        font-size: 0.6rem;
-        line-height: 1.3;
-      }
-
-      .trophy-tooltip {
-        width: min(180px, calc(100vw - 2rem));
-        padding: 0.55rem 0.6rem;
-      }
-
-      .trophy-tooltip p {
-        font-size: 0.72rem;
-        line-height: 1.35;
-      }
-
-      .trophy-bowl {
-        left: 20px;
-        top: 8px;
-        width: 36px;
-        height: 28px;
-      }
-
-      .trophy-bowl::before,
-      .trophy-bowl::after {
-        top: 6px;
-        width: 12px;
-        height: 12px;
-        border-width: 3px;
-      }
-
-      .trophy-bowl::before {
-        left: -14px;
-      }
-
-      .trophy-bowl::after {
-        right: -14px;
-      }
-
-      .trophy-stem {
-        left: 34px;
-        top: 39px;
-        width: 8px;
-        height: 18px;
-      }
-
-      .trophy-foot {
-        left: 27px;
-        top: 57px;
-        width: 22px;
-        height: 8px;
-      }
-
-      .trophy-base {
-        left: 18px;
-        top: 71px;
-        width: 40px;
-        height: 15px;
-      }
-    }
-  </style>
-{% endblock %}
-
-{% block content %}
-  <div class="flex flex-col gap-4">
-    {% call fieldset("cat ~/random/wins.md") %}
-      <div class="case-shell">
-        <section class="case-hero">
-          <h2>trophy case</h2>
-          <p>
-            mostly just milestones i wanted to keep somewhere. this page is
-            meant to feel more like a shelf than a scoreboard.
-          </p>
-        </section>
-
-        <section class="case-grid">
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>summer 2026 internship for solutions architecture.</p>
-            </div>
-            <div class="trophy nvidia">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">nvidia internship</p>
-              <p class="trophy-meta">2026 - solutions architect intern</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>software engineering internship across both on-site and part-time semesters.</p>
-            </div>
-            <div class="trophy adtran">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">adtran internship</p>
-              <p class="trophy-meta">2025 - 2026 - software engineering</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>combined visits across the roblox games featured on the homepage.</p>
-            </div>
-            <div class="trophy roblox">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">145m+ plays</p>
-              <p class="trophy-meta">across 5 launched roblox games</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>got invited out to roblox developer conference in 2022.</p>
-            </div>
-            <div class="trophy roblox">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">rdc 2022</p>
-              <p class="trophy-meta">invite to roblox developer conference</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>counts as a championship until proven otherwise.</p>
-            </div>
-            <div class="trophy rl">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">rocket league champion</p>
-              <p class="trophy-meta">still counts as athletic achievement</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>high school swim arc. still one of the harder things i've trained for.</p>
-            </div>
-            <div class="trophy swim">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">varsity swimmer</p>
-              <p class="trophy-meta">pb: 100y free 53:03 100y breast 1:09.12</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>not world class, but respectable enough to stay on the shelf.</p>
-            </div>
-            <div class="trophy climb">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">v5 rock climber</p>
-              <p class="trophy-meta">(at least in my gym)</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>sponsored the hackathon, added a prize track, and helped judge projects.</p>
-            </div>
-            <div class="trophy sase">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">sasehacks sponsor</p>
-              <p class="trophy-meta">added a track prize and judged</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>prize winner at SwampHacks.</p>
-            </div>
-            <div class="trophy swamp">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">swamphacks winner</p>
-              <p class="trophy-meta">university of florida - prize winner</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>hackathon prize winner at the UF SHPE event.</p>
-            </div>
-            <div class="trophy shpe">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">shpe hackathon winner</p>
-              <p class="trophy-meta">university of florida - prize winner</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>overall winner at the University of South Florida hackathon.</p>
-            </div>
-            <div class="trophy usf">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">usf hackathon winner</p>
-              <p class="trophy-meta">university of south florida - overall winner</p>
-            </div>
-          </article>
-
-          <article class="case-slot" tabindex="0">
-            <div class="trophy-tooltip">
-              <p>overall winner in Anthropic's Claude Buildathon.</p>
-            </div>
-            <div class="trophy anthropic">
-              <div class="trophy-bowl"></div>
-              <div class="trophy-stem"></div>
-              <div class="trophy-foot"></div>
-              <div class="trophy-base"></div>
-            </div>
-            <div class="trophy-plaque">
-              <p class="trophy-title">claude buildathon winner</p>
-              <p class="trophy-meta">anthropic - overall winner</p>
-            </div>
-          </article>
-        </section>
+    </style>
+    <script>
+      /*to prevent Firefox FOUC, this must be here*/
+      let FF_FOUC_FIX;
+    </script>
+    <script
+      async=""
+      data-goatcounter="https://GOATCOUNTER_CODE.goatcounter.com/count"
+      src="//gc.zgo.at/count.js"
+    ></script>
+    <meta content="https://ajioswxld.me/random/wins" property="og:url" />
+    <meta content="Aji Bimantoro | Wins" property="og:title" />
+    <meta
+      content="Aji Bimantoro's trophy case of wins and milestones"
+      property="og:description"
+    />
+    <meta content="https://ajioswxld.me/assets/me.jpg" property="og:image" />
+    <meta content="website" property="og:type" />
+    <meta
+      content="Aji Bimantoro's trophy case of wins and milestones"
+      name="description"
+    />
+    <meta content="ajioswxld.me" property="twitter:domain" />
+    <meta content="summary_large_image" name="twitter:card" />
+    <meta content="@adv-ajioswxld" name="twitter:site" />
+    <meta content="https://ajioswxld.me/random/wins" property="twitter:url" />
+    <meta content="Aji Bimantoro | Wins" name="twitter:title" />
+    <meta
+      content="Aji Bimantoro's trophy case of wins and milestones"
+      name="twitter:description"
+    />
+    <meta content="https://ajioswxld.me/assets/me.jpg" name="twitter:image" />
+  </head>
+  <body>
+    <main
+      class="flex min-h-screen flex-col max-w-5xl mx-auto px-4 py-4 sm:py-8 leading-5 font-sans"
+    >
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3"
+      >
+        <a href="/">
+          <h1 class="font-mono text-2xl font-bold">Purbo (Aji) Bimantoro</h1>
+        </a>
+        <div
+          class="grid grid-cols-2 sm:flex gap-2 items-stretch sm:items-center w-full sm:w-auto my-1"
+        >
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0 bg-[#0077b5] text-white"
+            href="https://www.linkedin.com/in/purboajibimantoro/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/linkedin.svg');"
+            ></div>
+            <span class="ms-1">LinkedIn</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://github.com/ajithropic"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/github.svg');"
+            ></div>
+            <span class="ms-1">GitHub</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://x.com/ajithropic"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div class="icon" style="mask-image: url('/assets/x.svg');"></div>
+            <span class="ms-1">X</span>
+          </a>
+          <a
+            class="flex flex-row items-center justify-center align-middle rounded-none outline outline-1 outline-black dark:outline-white dark:hover:bg-white dark:hover:text-black hover:bg-black hover:text-white text-normal px-4 h-6 me-[4px] shadow-[3px_3px_0px_1px_rgba(0,0,0,0.5)] dark:shadow-[3px_3px_0px_1px_rgba(255,255,255,0.6)] w-full sm:w-32 h-9 sm:h-6 me-0"
+            href="https://letterboxd.com/vrkael/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <div
+              class="icon"
+              style="mask-image: url('/assets/letterboxd.svg');"
+            ></div>
+            <span class="ms-1">Letterboxd</span>
+          </a>
+          <button
+            aria-label="Toggle dark mode"
+            class="theme-toggle col-span-2 justify-self-end sm:justify-self-auto"
+            id="theme-toggle"
+            title="Toggle dark mode"
+            type="button"
+          >
+            <span class="theme-toggle-glyph" id="theme-toggle-icon"></span>
+          </button>
+        </div>
       </div>
-    {% endcall %}
-  </div>
-{% endblock %}
+      <div class="flex flex-col gap-4">
+        <fieldset
+          class="border-t md:border border-solid border-black dark:border-white min-w-0 p-1 md:p-4 pt-2"
+        >
+          <legend class="ms-4 md:ms-0">
+            <h6 class="text-lg mx-2 font-mono italic">cat ~/random/wins.md</h6>
+          </legend>
+          <div class="case-shell">
+            <section class="case-hero">
+              <h2>trophy case</h2>
+              <p>
+                mostly just milestones i wanted to keep somewhere. this page is
+                meant to feel more like a shelf than a scoreboard.
+              </p>
+            </section>
+            <section class="case-empty">
+              <p>coming soon</p>
+            </section>
+          </div>
+        </fieldset>
+      </div>
+      <div class="h-3"></div>
+      <fieldset
+        class="border-t md:border border-solid border-black dark:border-white min-w-0 p-1 md:p-4 pt-2"
+      >
+        <legend class="ms-4 md:ms-0">
+          <h6 class="text-lg mx-2 font-mono italic">cat README.md</h6>
+        </legend>
+        <div class="flex flex-row justify-between">
+          <span class="prose dark:prose-invert">
+            Source code on
+            <a href="https://github.com/sagarreddypatil/portfolio-website">
+              GitHub
+            </a>
+            thanks to
+            <a href="https://sagarpatil.me/"> Sagar Patil </a>
+          </span>
+        </div>
+      </fieldset>
+    </main>
+    <script>
+      (() => {
+        const toggle = document.getElementById("theme-toggle");
+        const icon = document.getElementById("theme-toggle-icon");
+        const root = document.documentElement;
+
+        function syncThemeIcon() {
+          if (icon) {
+            icon.classList.toggle("is-sun", root.classList.contains("dark"));
+          }
+        }
+
+        if (toggle) {
+          syncThemeIcon();
+          toggle.addEventListener("click", () => {
+            root.classList.toggle("dark");
+            localStorage.setItem(
+              "theme",
+              root.classList.contains("dark") ? "dark" : "light",
+            );
+            syncThemeIcon();
+          });
+        }
+      })();
+    </script>
+    <script
+      async=""
+      id="MathJax-script"
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+  </body>
+</html>
