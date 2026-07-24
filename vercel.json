@@ -1,5 +1,5 @@
 {
   "framework": null,
-  "buildCommand": "pip install -r requirements.txt || pip install . && python build.py",
+  "buildCommand": "python src/build.py",
   "outputDirectory": "public"
 }
